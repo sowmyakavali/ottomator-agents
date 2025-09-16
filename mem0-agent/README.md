@@ -16,10 +16,13 @@ The Live Agent Studio integration verison referenced below also shows how to int
 
 This repository contains multiple implementations of the Mem0 agent:
 
-1. **Basic Implementation** (`iterations/v1-basic-mem0.py`): Simple implementation using in-memory storage
-2. **Supabase Integration** (`iterations/v2-supabase-mem0.py`): Enhanced implementation with Supabase vector storage
-3. **Streamlit Web Interface** (`iterations/v3-streamlit-supabase-mem0.py`): Basic Streamlit web application with Supabase authentication for mem0 user IDs
-4. **Live Agent Studio Integration** (`studio-integration-version/`): Code for integrating with Live Agent Studio
+1. **Basic Watson AI Implementation** (`iterations/v1-basic-mem0.py`): Pure Watson AI implementation (requires Mem0 IBM provider support)
+2. **Hybrid Implementation** (`iterations/v1-hybrid-mem0.py`): Uses OpenAI for memory embeddings and Watson AI for text generation (recommended)
+3. **Supabase Integration** (`iterations/v2-supabase-mem0.py`): Enhanced implementation with Supabase vector storage
+4. **Streamlit Web Interface** (`iterations/v3-streamlit-supabase-mem0.py`): Web application with Supabase authentication
+5. **Live Agent Studio Integration** (`studio-integration-version/`): Code for integrating with Live Agent Studio
+
+**Note**: If you encounter issues with Mem0's IBM provider support, use the hybrid implementation (`v1-hybrid-mem0.py`) which is more reliable.
 
 The `studio-integration-version` folder contains the code used to integrate this agent into the Live Agent Studio, including:
 - API endpoint setup
@@ -53,16 +56,31 @@ The `studio-integration-version` folder contains the code used to integrate this
 
 3. **Set up environment variables**:
    Copy the `.env.example` file to `.env` and fill in your API keys:
+   
+   **For Pure Watson AI approach:**
    - `WATSONX_API_KEY`: Your IBM Watson AI API key
    - `WATSONX_PROJECT_ID`: Your Watson AI project ID  
    - `WATSONX_URL`: Your Watson AI service URL (defaults to https://us-south.ml.cloud.ibm.com)
    - `MODEL_CHOICE`: The Watson AI model to use (defaults to ibm/granite-13b-chat-v2)
+   
+   **For Hybrid approach (recommended):**
+   - All Watson AI variables above, plus:
+   - `OPENAI_API_KEY`: Your OpenAI API key (for memory embeddings)
+   
+   **For Supabase versions:**
    - `DATABASE_URL`: Your Supabase PostgreSQL connection string
    - `SUPABASE_URL`: Your Supabase project URL
    - `SUPABASE_KEY`: Your Supabase service role key
 
 4. **Run the application**:
    ```bash
+   # For hybrid approach (recommended)
+   python iterations/v1-hybrid-mem0.py
+   
+   # For pure Watson AI (if Mem0 supports IBM provider)
+   python iterations/v1-basic-mem0.py
+   
+   # For Streamlit interface
    streamlit run iterations/v3-streamlit-supabase-mem0.py
    ```
 
@@ -111,3 +129,9 @@ The `studio-integration-version` folder contains everything needed to deploy thi
 2. **Database Connection Issues**:
    - Verify your DATABASE_URL is correctly formatted
    - Make sure you aren't using special characters in your database password. See the note in `.env.example`.
+
+3. **Watson AI Issues**:
+   - Verify your WATSONX_API_KEY is correctly set in the `.env` file
+   - Check if your WATSONX_PROJECT_ID is valid
+   - Ensure your Watson AI service region (WATSONX_URL) is correct
+   - Make sure your Watson AI account has access to the model you're trying to use

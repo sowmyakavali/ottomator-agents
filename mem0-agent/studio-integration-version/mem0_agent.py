@@ -35,6 +35,7 @@ class WatsonXModel:
     def __init__(self, model_id: str, project_id: str, credentials: dict):
         self.model_id = model_id
         self.project_id = project_id
+        self.credentials = credentials
         self.model = ModelInference(
             model_id=model_id,
             credentials=credentials,
@@ -61,7 +62,9 @@ class WatsonXModel:
         full_prompt = "\n".join(prompt_parts) + "\nAssistant:"
         
         try:
-            response = self.model.generate_text(prompt=full_prompt)
+            response = await asyncio.get_event_loop().run_in_executor(
+                None, self.model.generate_text, full_prompt
+            )
             content = response['results'][0]['generated_text'].strip()
             
             return ModelResponse(
