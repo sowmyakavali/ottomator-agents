@@ -1,0 +1,24 @@
+# Watson X.AI dependencies
+ibm-watson-machine-learning==1.0.368
+
+# Core dependencies for structured outputs and async operations
+pydantic==2.10.6
+pydantic_core==2.27.2
+python-dotenv==1.0.1
+asyncio
+
+# Optional dependencies for enhanced functionality  
+requests==2.32.3
+typing_extensions==4.12.2
+
+# For Streamlit version (if needed)
+streamlit==1.43.2
+
+# Pandas for data handling (required by Watson ML)
+pandas<2.2.0,>=0.24.2
+
+# JSON schema for validation
+jsonschema==4.23.0
+
+# Rich for beautiful terminal output
+rich==13.9.4
