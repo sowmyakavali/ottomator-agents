@@ -44,9 +44,12 @@ supabase: Client = create_client(
 # Mem0 Setup
 config = {
     "llm": {
-        "provider": "openai",
+        "provider": "ibm",
         "config": {
-            "model": os.getenv('LLM_MODEL', 'gpt-4o-mini')
+            "model": os.getenv('LLM_MODEL', 'ibm/granite-13b-chat-v2'),
+            "url": os.getenv('WATSONX_URL', 'https://us-south.ml.cloud.ibm.com'),
+            "apikey": os.environ['WATSONX_API_KEY'],
+            "project_id": os.environ['WATSONX_PROJECT_ID']
         }
     },
     "vector_store": {

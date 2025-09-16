@@ -1,7 +1,8 @@
 import os
 import streamlit as st
 from dotenv import load_dotenv
-from openai import OpenAI
+from ibm_watsonx_ai import APIClient
+from ibm_watsonx_ai.foundation_models import Model
 from mem0 import Memory
 import supabase
 from supabase.client import Client, ClientOptions
@@ -19,7 +20,16 @@ supabase_url = os.environ.get("SUPABASE_URL", "")
 supabase_key = os.environ.get("SUPABASE_KEY", "")
 supabase_client = supabase.create_client(supabase_url, supabase_key)
 
-model = os.getenv('MODEL_CHOICE', 'gpt-4o-mini')
+model_choice = os.getenv('MODEL_CHOICE', 'ibm/granite-13b-chat-v2')
+
+# Watson AI configuration
+credentials = {
+    "url": os.getenv('WATSONX_URL', 'https://us-south.ml.cloud.ibm.com'),
+    "apikey": os.environ['WATSONX_API_KEY']
+}
+
+watsonx_client = APIClient(credentials)
+project_id = os.environ['WATSONX_PROJECT_ID']
 
 # Streamlit page configuration
 st.set_page_config(
@@ -29,18 +39,30 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Cache OpenAI client and Memory instance
+# Cache Watson AI client and Memory instance
 @st.cache_resource
-def get_openai_client():
-    return OpenAI()
+def get_watsonx_model():
+    return Model(
+        model_id=model_choice,
+        params={
+            "decoding_method": "greedy",
+            "max_new_tokens": 512,
+            "temperature": 0.7
+        },
+        credentials=credentials,
+        project_id=project_id
+    )
 
 @st.cache_resource
 def get_memory():
     config = {
         "llm": {
-            "provider": "openai",
+            "provider": "ibm",
             "config": {
-                "model": model
+                "model": model_choice,
+                "url": os.getenv('WATSONX_URL', 'https://us-south.ml.cloud.ibm.com'),
+                "apikey": os.environ['WATSONX_API_KEY'],
+                "project_id": os.environ['WATSONX_PROJECT_ID']
             }
         },
         "vector_store": {
@@ -54,7 +76,7 @@ def get_memory():
     return Memory.from_config(config)
 
 # Get cached resources
-openai_client = get_openai_client()
+watsonx_model = get_watsonx_model()
 memory = get_memory()
 
 # Authentication functions
@@ -111,16 +133,20 @@ def chat_with_memories(message, user_id):
     relevant_memories = memory.search(query=message, user_id=user_id, limit=3)
     memories_str = "\n".join(f"- {entry['memory']}" for entry in relevant_memories["results"])
     
-    # Generate Assistant response
+    # Generate Assistant response using Watson AI
     system_prompt = f"You are a helpful AI assistant with memory. Answer the question based on the query and user's memories.\nUser Memories:\n{memories_str}"
-    messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": message}]
+    full_prompt = f"{system_prompt}\n\nUser: {message}\nAssistant:"
     
     with st.spinner("Thinking..."):
-        response = openai_client.chat.completions.create(model=model, messages=messages)
-        assistant_response = response.choices[0].message.content
+        response = watsonx_model.generate_text(prompt=full_prompt)
+        assistant_response = response['results'][0]['generated_text'].strip()
 
     # Create new memories from the conversation
-    messages.append({"role": "assistant", "content": assistant_response})
+    messages = [
+        {"role": "system", "content": system_prompt}, 
+        {"role": "user", "content": message},
+        {"role": "assistant", "content": assistant_response}
+    ]
     memory.add(messages, user_id=user_id)
 
     return assistant_response

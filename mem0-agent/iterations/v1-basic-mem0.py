@@ -1,20 +1,46 @@
 from dotenv import load_dotenv
-from openai import OpenAI
+from ibm_watsonx_ai import APIClient
+from ibm_watsonx_ai.foundation_models import Model
 from mem0 import Memory
+import os
 
 # Load environment variables
 load_dotenv()
 
+# Watson AI configuration
+credentials = {
+    "url": os.getenv('WATSONX_URL', 'https://us-south.ml.cloud.ibm.com'),
+    "apikey": os.environ['WATSONX_API_KEY']
+}
+
+watsonx_client = APIClient(credentials)
+project_id = os.environ['WATSONX_PROJECT_ID']
+
+# Model configuration for Mem0 to use Watson AI
 config = {
     "llm": {
-        "provider": "openai",
+        "provider": "ibm",
         "config": {
-            "model": "gpt-4o-mini"
+            "model": os.getenv('MODEL_CHOICE', 'ibm/granite-13b-chat-v2'),
+            "url": os.getenv('WATSONX_URL', 'https://us-south.ml.cloud.ibm.com'),
+            "apikey": os.environ['WATSONX_API_KEY'],
+            "project_id": os.environ['WATSONX_PROJECT_ID']
         }
     }
 }
 
-openai_client = OpenAI()
+# Watson AI model for direct chat
+model = Model(
+    model_id=os.getenv('MODEL_CHOICE', 'ibm/granite-13b-chat-v2'),
+    params={
+        "decoding_method": "greedy",
+        "max_new_tokens": 512,
+        "temperature": 0.7
+    },
+    credentials=credentials,
+    project_id=project_id
+)
+
 memory = Memory.from_config(config)
 
 def chat_with_memories(message: str, user_id: str = "default_user") -> str:
@@ -22,14 +48,19 @@ def chat_with_memories(message: str, user_id: str = "default_user") -> str:
     relevant_memories = memory.search(query=message, user_id=user_id, limit=3)
     memories_str = "\n".join(f"- {entry['memory']}" for entry in relevant_memories["results"])
     
-    # Generate Assistant response
+    # Generate Assistant response using Watson AI
     system_prompt = f"You are a helpful AI. Answer the question based on query and memories.\nUser Memories:\n{memories_str}"
-    messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": message}]
-    response = openai_client.chat.completions.create(model="gpt-4o-mini", messages=messages)
-    assistant_response = response.choices[0].message.content
+    full_prompt = f"{system_prompt}\n\nUser: {message}\nAssistant:"
+    
+    response = model.generate_text(prompt=full_prompt)
+    assistant_response = response['results'][0]['generated_text'].strip()
 
     # Create new memories from the conversation
-    messages.append({"role": "assistant", "content": assistant_response})
+    messages = [
+        {"role": "system", "content": system_prompt}, 
+        {"role": "user", "content": message},
+        {"role": "assistant", "content": assistant_response}
+    ]
     memory.add(messages, user_id=user_id)
 
     return assistant_response

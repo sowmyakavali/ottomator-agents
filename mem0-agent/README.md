@@ -1,6 +1,6 @@
-# Mem0 Agent - Memory-Powered AI Assistant
+# Mem0 Agent - Memory-Powered AI Assistant with Watson AI
 
-This project demonstrates how to build an AI assistant with memory capabilities using the Mem0 library, OpenAI, and Supabase for authentication and vector storage.
+This project demonstrates how to build an AI assistant with memory capabilities using the Mem0 library, IBM Watson AI, and Supabase for authentication and vector storage.
 
 The Live Agent Studio integration verison referenced below also shows how to integrate Mem0 with a Pydantic AI agent.
 
@@ -10,6 +10,7 @@ The Live Agent Studio integration verison referenced below also shows how to int
 - **🔒 Secure Authentication**: User data is protected with Supabase authentication
 - **💬 Personalized Responses**: Get responses tailored to your history and context
 - **🌐 Streamlit Interface**: Easy-to-use web interface for chatting with the AI
+- **🤖 Watson AI Integration**: Powered by IBM Watson AI models for reliable responses
 
 ## Project Structure
 
@@ -29,7 +30,7 @@ The `studio-integration-version` folder contains the code used to integrate this
 ## Prerequisites
 
 - Python 3.11+
-- OpenAI API key
+- IBM Watson AI API key and project ID
 - Supabase account and project
 
 ## Setup Instructions
@@ -52,8 +53,10 @@ The `studio-integration-version` folder contains the code used to integrate this
 
 3. **Set up environment variables**:
    Copy the `.env.example` file to `.env` and fill in your API keys:
-   - `OPENAI_API_KEY`: Your OpenAI API key
-   - `MODEL_CHOICE`: The OpenAI model to use (defaults to gpt-4o-mini)
+   - `WATSONX_API_KEY`: Your IBM Watson AI API key
+   - `WATSONX_PROJECT_ID`: Your Watson AI project ID  
+   - `WATSONX_URL`: Your Watson AI service URL (defaults to https://us-south.ml.cloud.ibm.com)
+   - `MODEL_CHOICE`: The Watson AI model to use (defaults to ibm/granite-13b-chat-v2)
    - `DATABASE_URL`: Your Supabase PostgreSQL connection string
    - `SUPABASE_URL`: Your Supabase project URL
    - `SUPABASE_KEY`: Your Supabase service role key
@@ -62,6 +65,13 @@ The `studio-integration-version` folder contains the code used to integrate this
    ```bash
    streamlit run iterations/v3-streamlit-supabase-mem0.py
    ```
+
+## Watson AI Setup
+
+1. Create an IBM Watson AI account at [IBM Cloud](https://cloud.ibm.com/)
+2. Create a Watson Studio project and get your project ID
+3. Get your API key from IBM Cloud Identity and Access Management (IAM)
+4. Choose your service region (default is us-south)
 
 ## Supabase Setup
 
@@ -73,13 +83,13 @@ The `studio-integration-version` folder contains the code used to integrate this
 
 The application uses:
 - **Mem0**: For memory management and retrieval
-- **OpenAI**: For generating AI responses
+- **IBM Watson AI**: For generating AI responses
 - **Supabase**: For authentication and vector storage
 - **Streamlit**: For the web interface
 
 When a user sends a message, the system:
 1. Retrieves relevant memories based on the query
-2. Includes these memories in the prompt to OpenAI
+2. Includes these memories in the prompt to Watson AI
 3. Stores the conversation as a new memory
 4. Displays the response to the user
 
